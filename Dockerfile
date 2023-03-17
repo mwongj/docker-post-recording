@@ -1,10 +1,10 @@
 ﻿# chacawaca/post-recording
 
-FROM ubuntu:20.04 AS builder
+FROM ubuntu:20.04
 WORKDIR /tmp
 RUN apt update && \
     DEBIAN_FRONTEND=noninteractive apt install --no-install-recommends \
-      coreutils findutils expect tcl8.6 \
+      coreutils findutils expect tcl8.6 curl \
       mediainfo libfreetype6 libutf8proc2 \
       libtesseract4 libpng16-16 expat \
       libva-drm2 i965-va-driver \
@@ -27,20 +27,14 @@ RUN cd /opt && \
     cd comchap && \
     make
 
-FROM ubuntu:20.04 AS stage1
-
-RUN apt-get update \
-   && apt-get install -y --no-install-recommends curl \
-   && apt-get autoremove -y \
+# clean up
+RUN apt-get autoremove -y \
    && apt-get purge -y --auto-remove \
    && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -u 911 -U -d /config -s /bin/false abc && \
       usermod -G users abc && \
       mkdir /config /output
-
-COPY --from=builder /opt/Comskip/comskip /usr/local/bin
-COPY --from=builder /opt/comchap /usr/local/bin
 
 # Copy ccextractor
 COPY --from=gizmotronic/ccextractor /usr/local/bin /usr/local/bin
