@@ -1,9 +1,7 @@
 ﻿# chacawaca/post-recording
 
-FROM ubuntu:20.04
-
+FROM ubuntu:20.04 AS builder
 WORKDIR /tmp
-
 RUN apt update && \
     DEBIAN_FRONTEND=noninteractive apt install --no-install-recommends \
       coreutils findutils expect tcl8.6 \
@@ -16,26 +14,32 @@ RUN apt update && \
       mkdir /config /output && \
       apt-get install -y python3 git build-essential libargtable2-dev autoconf \
       libtool-bin libsdl1.2-dev libswscale-dev libavutil-dev libavformat-dev libavcodec-dev nginx && \
-      echo "daemon off;" >> /etc/nginx/nginx.conf && \
-	
+      echo "daemon off;" >> /etc/nginx/nginx.conf
+
 # Clone Comskip
-    cd /opt && \
+RUN cd /opt && \
     git clone https://github.com/erikkaashoek/Comskip.git && \
     cd Comskip && \
     ./autogen.sh && \
     ./configure && \
-    make && \
+    make
 
 # Clone Comchap
-    cd /opt && \
+RUN cd /opt && \
     git clone https://github.com/BrettSheleski/comchap.git && \
     cd comchap && \
-    make && \	
-	
-# cleanup
-    apt autoremove -y && \
-    apt clean -y && \
-    rm -rf /tmp/* /var/lib/apt/lists/*
+    make
+
+FROM ubuntu:20.04 AS stage1
+
+RUN apt-get update \
+   && apt-get install -y --no-install-recommends curl \
+   && apt-get autoremove -y \
+   && apt-get purge -y --auto-remove \
+   && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /opt/Comskip/comskip /usr/local/bin
+COPY --from=builder /opt/comchap /usr/local/bin
 
 # Copy ccextractor
 COPY --from=gizmotronic/ccextractor /usr/local/bin /usr/local/bin
