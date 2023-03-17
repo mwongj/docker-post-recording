@@ -20,7 +20,7 @@ RUN apt update && \
 	
 # Clone Comskip
     cd /opt && \
-    git clone git://github.com/erikkaashoek/Comskip && \
+    git clone https://github.com/erikkaashoek/Comskip.git && \
     cd Comskip && \
     ./autogen.sh && \
     ./configure && \
