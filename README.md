@@ -19,6 +19,7 @@ docker run -d \
 	-e PUID=99 \
 	-e PGID=100 \
 	-e UMASK=000 \
+	-e COMSKIP_FLAGS="" \
 	--restart always \
 	chacawaca/post-recording
 ```
