@@ -9,9 +9,6 @@ RUN apt update && \
       libtesseract4 libpng16-16 expat \
       libva-drm2 i965-va-driver \
       libxcb-shape0 libssl1.1 -y && \
-      useradd -u 911 -U -d /config -s /bin/false abc && \
-      usermod -G users abc && \
-      mkdir /config /output && \
       apt-get install -y python3 git build-essential libargtable2-dev autoconf \
       libtool-bin libsdl1.2-dev libswscale-dev libavutil-dev libavformat-dev libavcodec-dev nginx && \
       echo "daemon off;" >> /etc/nginx/nginx.conf
@@ -37,6 +34,10 @@ RUN apt-get update \
    && apt-get autoremove -y \
    && apt-get purge -y --auto-remove \
    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -u 911 -U -d /config -s /bin/false abc && \
+      usermod -G users abc && \
+      mkdir /config /output
 
 COPY --from=builder /opt/Comskip/comskip /usr/local/bin
 COPY --from=builder /opt/comchap /usr/local/bin
