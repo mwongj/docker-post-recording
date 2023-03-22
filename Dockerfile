@@ -1,41 +1,40 @@
 ﻿# chacawaca/post-recording
 
 FROM ubuntu:20.04
-
 WORKDIR /tmp
-
 RUN apt update && \
     DEBIAN_FRONTEND=noninteractive apt install --no-install-recommends \
-      coreutils findutils expect tcl8.6 \
+      coreutils findutils expect tcl8.6 curl \
       mediainfo libfreetype6 libutf8proc2 \
       libtesseract4 libpng16-16 expat \
       libva-drm2 i965-va-driver \
       libxcb-shape0 libssl1.1 -y && \
-      useradd -u 911 -U -d /config -s /bin/false abc && \
-      usermod -G users abc && \
-      mkdir /config /output && \
       apt-get install -y python3 git build-essential libargtable2-dev autoconf \
-      libtool-bin libsdl1.2-dev libavutil-dev libavformat-dev libavcodec-dev nginx && \
-      echo "daemon off;" >> /etc/nginx/nginx.conf && \
-	
+      libtool-bin libsdl1.2-dev libswscale-dev libavutil-dev libavformat-dev libavcodec-dev nginx && \
+      echo "daemon off;" >> /etc/nginx/nginx.conf
+
 # Clone Comskip
-    cd /opt && \
-    git clone git://github.com/erikkaashoek/Comskip && \
+RUN cd /opt && \
+    git clone https://github.com/erikkaashoek/Comskip.git && \
     cd Comskip && \
     ./autogen.sh && \
     ./configure && \
-    make && \
+    make
 
 # Clone Comchap
-    cd /opt && \
+RUN cd /opt && \
     git clone https://github.com/BrettSheleski/comchap.git && \
     cd comchap && \
-    make && \	
-	
-# cleanup
-    apt autoremove -y && \
-    apt clean -y && \
-    rm -rf /tmp/* /var/lib/apt/lists/*
+    make
+
+# clean up
+RUN apt-get autoremove -y \
+   && apt-get purge -y --auto-remove \
+   && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -u 911 -U -d /config -s /bin/false abc && \
+      usermod -G users abc && \
+      mkdir /config /output
 
 # Copy ccextractor
 COPY --from=gizmotronic/ccextractor /usr/local/bin /usr/local/bin
@@ -46,7 +45,7 @@ COPY --from=chacawaca/ffmpeg /usr/local/ /usr/local/
 ADD https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.1/s6-overlay-amd64-installer /tmp/
 RUN chmod +x /tmp/s6-overlay-amd64-installer && /tmp/s6-overlay-amd64-installer /
 # Copy script for Intel iGPU permissions
-COPY --from=linuxserver/plex /etc/cont-init.d/50-gid-video /etc/cont-init.d/50-gid-video
+COPY --from=linuxserver/plex /etc/s6-overlay/s6-rc.d/init-plex-gid-video/run /etc/cont-init.d/50-gid-video
 
 # Copy the start scripts.
 COPY rootfs/ /
@@ -64,6 +63,8 @@ ENV SUBTITLES=0 \
     SOURCE_STABLE_TIME=10 \
     SOURCE_MIN_DURATION=10 \
     LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8
+    LC_ALL=C.UTF-8 \
+    COMSKIP_FLAGS="" \
+    SKIP_TRANSCODE=0
 
 ENTRYPOINT ["/init"]
